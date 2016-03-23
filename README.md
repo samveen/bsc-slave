@@ -1,34 +1,21 @@
 # bsc-slave
 
-Here you can find the source code of the BSC-SLAVE kernel module for 
-the BCM2835 ARM soc used for the raspberry pi. I have tested it for 
-the rasperry pi 2 but it should work for the model B+ too.
+Here is the source code of the BSC-SLAVE kernel module for 
+the BCM2835 ARM soc used for the raspberry pi. It's been tested for 
+the rasperry pi 2 and the B+.
 
-There is a precompiled version of the module available (bsc-slave.ko)
-wich you can simply insert with
+You need to compile the module yourself with the included Makefile.
+To do that you'll need to install the kernel sources.
+
+#https://github.com/notro/rpi-source/wiki
+
+When you're done compiling the module you can load it with:
 
 #> insmod bsc-slave.ko
-
-It is compiled for the kernel version 3.18.12-v7+
-
-If you d'ont have this kernel version (verify with: uname -r)you need to 
-compile the module yourself. This is what the Makefile is for. 
-
-There are many possibilities. I chose installing rpi-update. You can find 
-instructions on: https://github.com/Hexxeh/rpi-update
-
-Than you need to install the kernel sources. Instructions you can find on:
-https://github.com/notro/rpi-source/wiki
  
-The file: i2ccat.c is just an exemple of how to talk to the i2c controller 
-of the pi. You give yourself a slave address and than read the FIFOs by means
-of the read and write system call.
+The 'i2ccat.c' file is a simple example of how to talk to the i2c controller 
+of the pi with C. You give yourself a slave address and than read the FIFOs
+by means of the read and write system call. You'll need to run the program
+as root or make a udev rule to set the appropriate permissions automatically.
 
-This is my first kernel module and I am not a professional programmer so
-I would be glad if someone more experienced makes this module better. At 
-the moment only one process can access the bus. 
-
-The controller also supports SPI Slave mode. I had no chance to make that 
-running. If you do I would be very happy if you could complete the module. 
-
-SDA is on GPIO18 (PIN HEADER 12) while SCL is on GPIO19 (PIN HEADER 35)
+#SDA is on GPIO18 (PIN HEADER 12) while SCL is on GPIO19 (PIN HEADER 35)
