@@ -432,14 +432,6 @@ static long i2c_slave_ioctl(struct file *filp, unsigned int cmd, unsigned long a
                 writel(arg, i2c_slave->base + BSC_SLV);
                 return 0;
 
-        case I2C_CLEAR_FIFOS:        /*this seems not to work*/
-
-                reg = readl(i2c_slave->base + BSC_CR);
-                reg |= BSC_CR_BRK;
-                writel(reg, i2c_slave->base + BSC_CR);
-
-                return 0;
-
         default:
                 /* NOTE:  returning a fault code here could cause trouble
                  * in buggy userspace code.  Some old kernel bugs returned
