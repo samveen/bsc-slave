@@ -25,7 +25,6 @@ int main(void){
     return -1;
   }
 
-
  while(1){
                         //read out I2C RX buffer
    if((length = read(fd, buffer, 20)) == -1){
@@ -33,26 +32,11 @@ int main(void){
    }
 
    for(count = 0; count < length; count++){
-     printf("recieved value: %02d\n", buffer[count]);
-   }
-
-                       //fill TX buffer with arbitrary values
-   for(count = 0; count < TX_BUF_SIZE; count++){
-     tx_buffer[count] = count;
-     tx_length = count + 1;
-   }
-
-
-   pointer = tx_buffer;
-   while( tx_length > 0){             //send values
-     transfered = write(fd, pointer, tx_length);
-     for(count = 0 ; count < transfered; count++){
-       printf("send value is %d\n", (int)*pointer++);
-       tx_length--;
-     }
+     printf("%c", buffer[count]);
    }
 
  }
+
 
  close(fd);
  return 0;
