@@ -32,24 +32,9 @@ void receiveBytes(uint8_t* data, uint16_t length)
 		bufferBegin = 0;
 	}
 
-	if ((bufferBegin + length) <= I2C_BUFFER_SIZE)
-	{
-		for (i = 0; i < length; i++)
-			buffer2[i + bufferLength] = data[i];
-		bufferLength += length;
-	}
-	else{
-		for (i = 0; i <= (I2C_BUFFER_SIZE - bufferBegin); i++){
-			buffer2[i + bufferLength] = data[i];
-		}
-		int x = (I2C_BUFFER_SIZE - bufferBegin) + 1;
-		bufferBegin = 0;
-		for (i = x; i < length; i++)
-		{
-			buffer2[x-i] = data[i];
-		}
-		bufferLength += length;
-	}
+	for (i = 0; i < length; i++)
+		buffer2[(i + bufferBegin + bufferLength)%I2C_BUFFER_SIZE] = data[i];
+	bufferLength += length;
 
 	processBuffer();
 }
@@ -59,29 +44,36 @@ void processBuffer()
 	uint8_t frameBuffer[I2C_BUFFER_SIZE];
 
 	int i = 0;
+	int bufferBeginJump = 0;
 
 	//Search for a full frame
-	for (i = 0; i < bufferLength; i++)
+	for (i = 0; i < (bufferLength-1); i++)
 	{
+		//Is this a start code?
 		if (buffer2[(bufferBegin + i) % I2C_BUFFER_SIZE] == I2C_CONTROL_CHAR && buffer2[((bufferBegin + i + 1) % I2C_BUFFER_SIZE)] == I2C_FRAME_START)
 		{
-			//See if we should have an ending yet
-			if (i + 3 < bufferLength)
+			//See if we should have the whole header yet
+			if (i + 5 < bufferLength)
 			{
 				//Grab the length of the frame from the header
 				uint16_t frameLength = buffer2[(bufferBegin + i + 2) % I2C_BUFFER_SIZE];
-				if (frameLength == I2C_CONTROL_CHAR)
-					frameLength = (frameLength << 8) + buffer2[(bufferBegin + i + 4) % I2C_BUFFER_SIZE];
+				int headerLength = 4;
+				if (frameLength == I2C_CONTROL_CHAR){
+					frameLength = frameLength * 256 + buffer2[(bufferBegin + i + 4) % I2C_BUFFER_SIZE];
+					headerLength++;
+					if (buffer2[(bufferBegin + i + 4) % I2C_BUFFER_SIZE] == I2C_CONTROL_CHAR)
+						headerLength++;
+				}
 				else
-					frameLength = (frameLength << 8) + buffer2[(bufferBegin + i + 3) % I2C_BUFFER_SIZE];
+					frameLength = frameLength*256 + buffer2[(bufferBegin + i + 3) % I2C_BUFFER_SIZE];
 
 				//See if we have the end of the frame in the buffer yet
-				if (i + 4 + frameLength <= bufferLength)
+				if (i + headerLength + frameLength <= bufferLength)
 				{
 					//Copy the frame into a flat buffer
 					//This step isn't 100% necessary but it does make processing the frame a bit easier to follow
 					int x;
-					for (x = 0; x < (frameLength + 4); x++)
+					for (x = 0; x < (frameLength + headerLength); x++)
 					{
 						frameBuffer[x] = buffer2[(x+i+bufferBegin) % I2C_BUFFER_SIZE];
 					}
@@ -89,23 +81,34 @@ void processBuffer()
 					//Process the frame!
 					processFrame(frameBuffer, frameLength + 4);
 
-					i += (frameLength + 4) % I2C_BUFFER_SIZE;
+					i += frameLength + headerLength;
+					bufferBeginJump += headerLength + frameLength;
 				}
 				else{
+					//We have a start code, but not enough data for a full frame yet
 					i = bufferLength;
 				}
 			}
+			else{
+				//Don't have the full header yet, nothing to do for now
+				i = bufferLength - 1;
+			}
+		}
+		else{
+			//Not sure what we got sent, but it's not a start code so advance the buffer.
+			bufferBeginJump++;
 		}
 	}
+	bufferBegin += bufferBeginJump;
+	bufferBegin = bufferBegin % I2C_BUFFER_SIZE;
+	bufferLength -= bufferBeginJump;
+
 }
 
 void processFrame(uint8_t *frameBuffer, uint16_t length)
 {
 
 	int x;
-	//for(x = 0;x<length;x++)
-	//	printf("%x ",frameBuffer[x]);
-	//printf("\n");
 
 	//Check the start and end headers
 	if (frameBuffer[0] != I2C_CONTROL_CHAR || frameBuffer[1] != I2C_FRAME_START || frameBuffer[length - 4] != I2C_CONTROL_CHAR || frameBuffer[length - 3] != I2C_FRAME_END)
@@ -118,9 +121,8 @@ void processFrame(uint8_t *frameBuffer, uint16_t length)
 
 	if (frameBuffer[length - 2] != checksum){
 		return;
-		printf("Bad Checksum\n");
 	}
-	else {printf("Good Checksum\n");} //All good, continue on
+	else {} //All good, continue on
 
 	//Shorten any escaped data now that we've isolated a single frame
 	for (i = 2; i < length-1; i++)
@@ -150,7 +152,7 @@ void processFrame(uint8_t *frameBuffer, uint16_t length)
 				{
 					position++;
 
-					printf("Found parameter %d.\n", frameBuffer[position + 1]);
+					printf("Parameter %d, ", frameBuffer[position + 1]);
 
 					int dataType = frameBuffer[position] & 0x0F;
 					uint8_t dataSize = (frameBuffer[position] & 0xF0) / 16;
