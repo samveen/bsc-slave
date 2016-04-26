@@ -31,6 +31,10 @@ int main(void){
 	rI2CTX_addParameter(1, (uint8_t)25);
 	rI2CTX_addParameter(2, (int16_t)-1000);
 	rI2CTX_addParameter(3, (uint16_t)1000);
+	rI2CTX_addParameter(4, (int64_t)-1000);
+	rI2CTX_addParameter(5, (uint64_t)1000);
+	rI2CTX_addParameter(6, (float)-250.252525);
+	rI2CTX_addParameter(7, (double)-250.252525);
 	rI2CTX_endFrame();
 
 	for (count = 0; count < rI2CTX_bufferPos; count++){
