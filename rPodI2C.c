@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include <endian.h>
 #include <inttypes.h>
+#include <curses.h>
 
 uint8_t buffer2[I2C_BUFFER_SIZE];
 uint16_t bufferBegin;
@@ -152,7 +153,7 @@ void processFrame(uint8_t *frameBuffer, uint16_t length)
 				{
 					position++;
 
-					printf("Parameter %d, ", frameBuffer[position + 1]);
+					//printf("%d: ", frameBuffer[position + 1]);
 
 					int dataType = frameBuffer[position] & 0x0F;
 					uint8_t dataSize = (frameBuffer[position] & 0xF0) / 16;
@@ -174,19 +175,31 @@ void processFrame(uint8_t *frameBuffer, uint16_t length)
 						memcpy(&floatingType,&rawFloatingData,4);
 
 						switch (frameBuffer[position])
-						{
-						case 0x11: printf("Signed 8 bit integer: %d\n", (int8_t)rawData); break;
-						case 0x12: printf("Unsigned 8 bit integer: %u\n", (uint8_t)rawData); break;
-						case 0x21: printf("Signed 16 bit integer: %d\n", (int16_t)ntohs((uint16_t)rawData)); break;
-						case 0x22: printf("Unsigned 16 bit integer: %d\n", ntohs((uint16_t)rawData)); break;
-						case 0x41: printf("Signed 32 bit integer: %d\n", ntohl((int32_t)rawData)); break;
-						case 0x42: printf("Unigned 32 bit integer: %d\n", ntohl((uint32_t)rawData)); break;
-						case 0x81: printf("Signed 64 bit integer: %"PRId64"\n", (int64_t)be64toh((uint64_t)rawData)); break;
-						case 0x82: printf("Unsigned 64 bit integer: %"PRId64"\n", be64toh((uint64_t)rawData)); break;
-						case 0x43: printf("Signed 32 bit float: %f\n", floatingType); break;
-						case 0x83: printf("Signed 64 bit double: %f\n", doubleType); break;
-						default:printf("Uh-oh\n\n"); break;
+						{/*
+						case 0x11: printw("int8 %d\n", (int8_t)rawData); break;
+						case 0x12: printw("uint8 %u\n", (uint8_t)rawData); break;
+						case 0x21: printw("int16 %d\n", (int16_t)ntohs((uint16_t)rawData)); break;
+						case 0x22: printw("uint16 %d\n", ntohs((uint16_t)rawData)); break;
+						case 0x41: printw("int32 %d\n", ntohl((int32_t)rawData)); break;
+						case 0x42: printw("uint32 %d\n", ntohl((uint32_t)rawData)); break;
+						case 0x81: printw("int64 %"PRId64"\n", (int64_t)be64toh((uint64_t)rawData)); break;
+						case 0x82: printw("uint64 64 bit integer: %"PRId64"\n", be64toh((uint64_t)rawData)); break;
+						case 0x43: printw("float %f\n", floatingType); break;
+						case 0x83: printw("double %f\n", doubleType); break;
+						default:printw("Uh-oh\n\n"); break;
+						*/
+						case 0x11: printf("%d, ", (int8_t)rawData); break;
+						case 0x12: printf("%u, ", (uint8_t)rawData); break;
+						case 0x21: printf("%d, ", (int16_t)ntohs((uint16_t)rawData)); break;
+						case 0x22: printf("%d, ", ntohs((uint16_t)rawData)); break;
+						case 0x41: printf("%d, ", ntohl((int32_t)rawData)); break;
+						case 0x42: printf("%d, ", ntohl((uint32_t)rawData)); break;
+						case 0x81: printf("%"PRId64", ", (int64_t)be64toh((uint64_t)rawData)); break;
+						case 0x82: printf("%"PRId64", ", be64toh((uint64_t)rawData)); break;
+						case 0x43: printf("%f, ", floatingType); break;
+						case 0x83: printf("%f, ", doubleType); break;
 						}
+						//refresh();
 					}
 					else if (dataType == 0){
 
@@ -196,7 +209,7 @@ void processFrame(uint8_t *frameBuffer, uint16_t length)
 					position += dataSize+2;
 				}
 					break;
-				case I2C_FRAME_END:return; break;
+				case I2C_FRAME_END:printf("\n"); return; break;
 			}
 		}
 		else{

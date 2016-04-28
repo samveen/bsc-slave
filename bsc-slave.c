@@ -237,49 +237,12 @@ static irqreturn_t i2c_slave_irq(int irq, void *dev_id) {
 static int i2c_slave_open(struct inode *inode, struct file *filp){
 
   struct bcm2708_i2c_slave_struct *i2c_slave;
-  u32 reg = 0;
 
   i2c_slave = container_of(inode->i_cdev,
                            struct bcm2708_i2c_slave_struct, cdev);
                                          //save device pointer for later use
                                          //in read() and write()
   filp->private_data = i2c_slave;
-
-
-                     //allocate 2^0 (one) page(s) of memory for RX Buffer
-  i2c_slave->rx_buf = __get_free_pages(GFP_KERNEL, 0);
-  if(IS_ERR((void *)i2c_slave->rx_buf)){
-     printk(KERN_NOTICE "c'ant allocate buffer memory");
-     return -ENOMEM;
-  }
-  i2c_slave->rx_buf_head = i2c_slave->rx_buf;
-  i2c_slave->rx_buf_tail = i2c_slave->rx_buf;
-
-                    //allocate TX Buffer
-  i2c_slave->tx_buf = __get_free_pages(GFP_KERNEL, 0);
-  if(IS_ERR((void *)i2c_slave->tx_buf)){
-     printk(KERN_NOTICE "c'ant allocate buffer memory");
-     return -ENOMEM;
-  }
-  i2c_slave->tx_buf_head = i2c_slave->tx_buf;
-  i2c_slave->tx_buf_tail = i2c_slave->tx_buf;
-
-                                         //select interrupt level for FIFOS
-  writel(BSC_IFLS_TX2_RX4BYTE, i2c_slave->base + BSC_IFLS);
-                                         //enable interrupts for
-                                         //RX and TX FIFO level crossing
-  reg = BSC_IMSC_RXIM | BSC_IMSC_TXIM;
-  writel(reg, i2c_slave->base + BSC_IMSC);
-                                         //clear errors
-  writel(0, i2c_slave->base + BSC_RSR);
-
-  reg = BSC_CR_BRK;                      //clear FIFOs
-  writel(reg, i2c_slave->base + BSC_CR);
-
-  reg  = BSC_CR_TXE;                     //enable transmit mode FIFO
-  reg |= (BSC_CR_EN | BSC_CR_I2C);       //enable i2c mode and device
-  writel(reg, i2c_slave->base + BSC_CR);
-
 
   return 0;
 }
@@ -293,12 +256,12 @@ int i2c_slave_release(struct inode *inode, struct file *filp){
 
   i2c_slave = filp->private_data;
 
+  /*
   writel(0, i2c_slave->base + BSC_IMSC);    //disable interrupts
   writel(0, i2c_slave->base + BSC_CR);      //disable device
 
   free_page(i2c_slave->rx_buf);             //free TX and RX ringbuffers
-  free_page(i2c_slave->tx_buf);
-
+  free_page(i2c_slave->tx_buf);*/
   return 0;
 }
 
@@ -466,6 +429,7 @@ int __init bcm2708_i2c_slave_init(void){
   int ret = -ENODEV;
   dev_t dev_number;
   struct bcm2708_i2c_slave_struct *i2c_slave;
+  u32 reg = 0;
 
  
   ret = alloc_chrdev_region(&dev_number, 0, MAX_DEVICES, DEVICE_NAME);
@@ -535,6 +499,40 @@ int __init bcm2708_i2c_slave_init(void){
                        (unsigned long)BSC_SLAVE_BASE, IRQ_NUMBER);
 
   i2c_slave_dev = i2c_slave;
+
+  //allocate 2^0 (one) page(s) of memory for RX Buffer
+  i2c_slave->rx_buf = __get_free_pages(GFP_KERNEL, 0);
+  if (IS_ERR((void *)i2c_slave->rx_buf)){
+	  printk(KERN_NOTICE "c'ant allocate buffer memory");
+	  return -ENOMEM;
+  }
+  i2c_slave->rx_buf_head = i2c_slave->rx_buf;
+  i2c_slave->rx_buf_tail = i2c_slave->rx_buf;
+
+  //allocate TX Buffer
+  i2c_slave->tx_buf = __get_free_pages(GFP_KERNEL, 0);
+  if (IS_ERR((void *)i2c_slave->tx_buf)){
+	  printk(KERN_NOTICE "c'ant allocate buffer memory");
+	  return -ENOMEM;
+  }
+  i2c_slave->tx_buf_head = i2c_slave->tx_buf;
+  i2c_slave->tx_buf_tail = i2c_slave->tx_buf;
+
+  //select interrupt level for FIFOS
+  writel(BSC_IFLS_TX2_RX4BYTE, i2c_slave->base + BSC_IFLS);
+  //enable interrupts for
+  //RX and TX FIFO level crossing
+  reg = BSC_IMSC_RXIM | BSC_IMSC_TXIM;
+  writel(reg, i2c_slave->base + BSC_IMSC);
+  //clear errors
+  writel(0, i2c_slave->base + BSC_RSR);
+
+  reg = BSC_CR_BRK;                      //clear FIFOs
+  writel(reg, i2c_slave->base + BSC_CR);
+
+  reg = BSC_CR_TXE;                     //enable transmit mode FIFO
+  reg |= (BSC_CR_EN | BSC_CR_I2C);       //enable i2c mode and device
+  writel(reg, i2c_slave->base + BSC_CR);
 
   return 0;
 

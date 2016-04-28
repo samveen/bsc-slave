@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<unistd.h>
 #include<fcntl.h>
+#include<curses.h>
 #include "bsc-slave.h"
 #include "rPodI2C.h"
 
@@ -40,22 +41,6 @@ int main(void){
 			receiveBytes(&buff,1);
 			//printf("recieved value: %xd\n", buffer[count]);
 		}
-
-		//fill TX buffer with arbitrary values
-		for(count = 0; count < TX_BUF_SIZE; count++){
-			tx_buffer[count] = count;
-			tx_length = count + 1;
-		}
-
-
-		pointer = tx_buffer;
-		while( tx_length > 0){             //send values
-			transfered = write(fd, pointer, tx_length);
-			for(count = 0 ; count < transfered; count++){
-				//printf("send value is %d\n", (int)*pointer++);
-				tx_length--;
-		}
-	}
 
 	}
 

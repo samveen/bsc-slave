@@ -1,2 +1,2 @@
-arm-linux-gcc -o i2ccat rPodI2C.c i2ccat.c
+arm-linux-gcc -o i2ccat rPodI2C.c i2ccat.c -lcurses
 
