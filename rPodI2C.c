@@ -80,10 +80,10 @@ void processBuffer()
 					}
 
 					//Process the frame!
-					processFrame(frameBuffer, frameLength + 4);
-
-					i += frameLength + headerLength;
-					bufferBeginJump += headerLength + frameLength;
+					if(processFrame(frameBuffer, frameLength + 4)){
+						i += frameLength + headerLength;
+						bufferBeginJump += headerLength + frameLength;
+					}
 				}
 				else{
 					//We have a start code, but not enough data for a full frame yet
@@ -106,14 +106,14 @@ void processBuffer()
 
 }
 
-void processFrame(uint8_t *frameBuffer, uint16_t length)
+_Bool processFrame(uint8_t *frameBuffer, uint16_t length)
 {
 
 	int x;
 
 	//Check the start and end headers
 	if (frameBuffer[0] != I2C_CONTROL_CHAR || frameBuffer[1] != I2C_FRAME_START || frameBuffer[length - 4] != I2C_CONTROL_CHAR || frameBuffer[length - 3] != I2C_FRAME_END)
-		return;
+		return false;
 
 	int i = 0;
 	uint8_t checksum = 0;
@@ -121,7 +121,7 @@ void processFrame(uint8_t *frameBuffer, uint16_t length)
 		checksum ^= frameBuffer[i];
 
 	if (frameBuffer[length - 2] != checksum){
-		return;
+		return false;
 	}
 	else {} //All good, continue on
 
@@ -217,5 +217,7 @@ void processFrame(uint8_t *frameBuffer, uint16_t length)
 			position++;
 		}
 	}
+
+	return true;
 	
 }

@@ -28,72 +28,6 @@
 
 #define BSC_SLAVE_BASE           (BCM2708_PERI_BASE + 0x214000)
 
-
-/* BSC SLAVE register offsets */
-#define BSC_DR			0x00
-#define BSC_RSR 		0x04
-#define BSC_SLV			0x08
-#define BSC_CR  		0x0c
-#define BSC_FR	        	0x10
-#define BSC_IFLS		0x14
-#define BSC_IMSC		0x18
-#define BSC_RIS			0x1c
-#define BSC_MIS			0x20
-#define BSC_ICR			0c24
-#define BSC_DMACR		0x28
-#define BSC_TDR                 0x2c
-#define BSC_GPUSTAT		0x30
-#define BSC_HCTRL		0x34
-#define BSC_DEBUG		0x3c
-
-
-
-/* Bitfields in DR */
-#define BSC_DR_RXFLEVEL_MASK	0xF8000000
-#define BSC_DR_TXFLEVEL_MASK	0x07c00000
-#define BSC_DR_RXBUSY		0x00200000
-#define BSC_DR_TXFE		0x00100000
-#define BSC_DR_RXFF		0x00080000
-#define BSC_DR_TXFF		0x00040000
-#define BSC_DR_RXFE		0x00020000
-#define BSC_DR_TXBUSY		0x00010000
-#define BSC_DR_DATA_MASK	0x000000FF
- 
-/* Bitfields in CR */
-#define BSC_CR_TESTFIFO		0x00000800
-#define BSC_CR_RXE              0x00000200
-#define BSC_CR_TXE              0x00000100
-#define BSC_CR_BRK              0x00000080
-#define BSC_CR_CPOL             0x00000010
-#define BSC_CR_CPHA             0x00000008
-#define BSC_CR_I2C              0x00000004
-#define BSC_CR_SPI	        0x00000002
-#define BSC_CR_EN	        0x00000001
-
-/* Bitfields in IMSC */
-#define BSC_IMSC_TXIM           0x00000002
-#define BSC_IMSC_RXIM		0x00000001
-
-/* Bitfields in MIS */
-#define BSC_MIS_TXMIS           0x00000002
-#define BSC_MIS_RXMIS		0x00000001
-
-/* Bitfields in ICR */
-#define BSC_ICR_TXIC		0x00000002
-
-/*Bitfields in IFLS*/
-#define BSC_IFLS_ONE_EIGHTS	0x00000000
-#define BSC_IFLS_ONE_QUART      0x00000024
-#define BSC_IFLS_ONE_HALF       0x00000012
-#define BSC_IFLS_TX2_RX4BYTE    0x00000008
-
-/* Bitfields in FR */
-#define BSC_FR_TXFE		0x00000010
-#define BSC_FR_TXFF		0x00000004
-#define BSC_FR_RXFE             0x00000002
-#define BSC_FR_TXBUSY           0x00000001
-
-
 struct bcm2708_i2c_slave_struct {
        void  __iomem          *base;
        int                     irq;
@@ -165,8 +99,6 @@ static void bcm2708_init_i2c_pinmode(int on) {
   iounmap(gpio);
 }
 
-
-
 /****************************************************************************/
 /* IRQ handler - fired on interrupt                                         */
 /****************************************************************************/
@@ -176,6 +108,11 @@ static irqreturn_t i2c_slave_irq(int irq, void *dev_id) {
    struct bcm2708_i2c_slave_struct *i2c_slave = dev_id;
    int tx_value_count;
 
+   /*reg = readl(i2c_slave->base + BSC_RSR);
+   if ((reg & BSC_RSR_UE) != 0)
+	   printk(KERN_NOTICE "i2c-slave TX underrun error");
+   if ((reg & BSC_RSR_OE) != 0)
+	   printk(KERN_NOTICE "i2c-slave RX overrun error");*/
 
    stat_reg = readl(i2c_slave->base + BSC_MIS);      //interrupt status reg
                                                      // clear error register
@@ -192,7 +129,6 @@ static irqreturn_t i2c_slave_irq(int irq, void *dev_id) {
                                       i2c_slave->rx_buf);
      }
 
-
    wake_up_interruptible(&i2c_slave_inq);
 
    }
@@ -200,6 +136,7 @@ static irqreturn_t i2c_slave_irq(int irq, void *dev_id) {
 
    if(stat_reg & BSC_MIS_TXMIS){
 
+	   
      tx_value_count = i2c_slave->tx_buf_head - i2c_slave->tx_buf_tail;
 
      if(tx_value_count == 0){                        //no data to send
@@ -208,7 +145,6 @@ static irqreturn_t i2c_slave_irq(int irq, void *dev_id) {
           reg &= ~(BSC_IMSC_TXIM);                   //disable TX interruts
           writel(reg ,i2c_slave->base + BSC_IMSC);
      }
-
 
      reg = readl(i2c_slave->base + BSC_FR);
                                                //while space in TX FIFO
@@ -394,7 +330,18 @@ static long i2c_slave_ioctl(struct file *filp, unsigned int cmd, unsigned long a
 
                 writel(arg, i2c_slave->base + BSC_SLV);
                 return 0;
-
+		case I2C_SLAVE_CLEAR_FIFOS: writel(readl(i2c_slave->base + BSC_CR)|BSC_CR_BRK, i2c_slave->base + BSC_CR);
+			writel(readl(i2c_slave->base + BSC_CR) & ~BSC_CR_BRK, i2c_slave->base + BSC_CR);
+			return 0;
+		case I2C_SLAVE_BSC_RSR: return readl(i2c_slave->base + BSC_RSR);
+		case I2C_SLAVE_BSC_SLV: return readl(i2c_slave->base + BSC_SLV);
+		case I2C_SLAVE_BSC_CR: return readl(i2c_slave->base + BSC_CR);
+		case I2C_SLAVE_BSC_FR: return readl(i2c_slave->base + BSC_FR);
+		case I2C_SLAVE_BSC_IFLS: return readl(i2c_slave->base + BSC_IFLS);
+		case I2C_SLAVE_BSC_IMSC: return readl(i2c_slave->base + BSC_IMSC);
+		case I2C_SLAVE_BSC_RIS: return readl(i2c_slave->base + BSC_RIS);
+		case I2C_SLAVE_BSC_MIS: return readl(i2c_slave->base + BSC_MIS);
+		case I2C_SLAVE_BSC_ICR: return readl(i2c_slave->base + BSC_ICR);
         default:
                 /* NOTE:  returning a fault code here could cause trouble
                  * in buggy userspace code.  Some old kernel bugs returned
@@ -530,8 +477,7 @@ int __init bcm2708_i2c_slave_init(void){
   reg = BSC_CR_BRK;                      //clear FIFOs
   writel(reg, i2c_slave->base + BSC_CR);
 
-  reg = BSC_CR_TXE;                     //enable transmit mode FIFO
-  reg |= (BSC_CR_EN | BSC_CR_I2C);       //enable i2c mode and device
+  reg = (BSC_CR_EN | BSC_CR_I2C | BSC_CR_TXE);       //enable i2c mode and device
   writel(reg, i2c_slave->base + BSC_CR);
 
   return 0;
@@ -599,3 +545,4 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_ALIAS("chdrv:" DRV_NAME);
+

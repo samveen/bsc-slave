@@ -39,7 +39,9 @@ int main(void){
 		for(count = 0; count < length; count++){
 			buff = buffer[count];
 			receiveBytes(&buff,1);
-			//printf("recieved value: %xd\n", buffer[count]);
+			///if(buffer[count] == 0xD0)
+			//	printf("\n");
+			//printf("%x ", buffer[count]);
 		}
 
 	}
