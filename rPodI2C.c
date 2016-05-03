@@ -80,10 +80,10 @@ void processBuffer()
 					}
 
 					//Process the frame!
-					processFrame(frameBuffer, frameLength + 4);
-
-					i += frameLength + headerLength;
-					bufferBeginJump += headerLength + frameLength;
+					if (processFrame(frameBuffer, frameLength + 4)){
+						i += frameLength + headerLength;
+						bufferBeginJump += headerLength + frameLength;
+					}
 				}
 				else{
 					//We have a start code, but not enough data for a full frame yet
@@ -106,7 +106,7 @@ void processBuffer()
 
 }
 
-void processFrame(uint8_t *frameBuffer, uint16_t length)
+bool processFrame(uint8_t *frameBuffer, uint16_t length)
 {
 
 	int x;
@@ -121,7 +121,7 @@ void processFrame(uint8_t *frameBuffer, uint16_t length)
 		checksum ^= frameBuffer[i];
 
 	if (frameBuffer[length - 2] != checksum){
-		return;
+		return false;
 	}
 	else {} //All good, continue on
 
@@ -218,4 +218,5 @@ void processFrame(uint8_t *frameBuffer, uint16_t length)
 		}
 	}
 	
+	return true;
 }
