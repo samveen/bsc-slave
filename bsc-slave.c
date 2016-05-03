@@ -108,27 +108,11 @@ static irqreturn_t i2c_slave_irq(int irq, void *dev_id) {
    struct bcm2708_i2c_slave_struct *i2c_slave = dev_id;
    int tx_value_count;
 
-<<<<<<< HEAD
-   reg = readl(i2c_slave->base + BSC_RSR);
-   if ((reg & BSC_RSR_UE) != 0)
-	   printk(KERN_NOTICE "i2c-slave TX underrun error");
-   if ((reg & BSC_RSR_OE) != 0)
-	   printk(KERN_NOTICE "i2c-slave TX underrun error");
-=======
-   /*reg = readl(i2c_slave->base + BSC_RSR);
-   if ((reg & BSC_RSR_UE) != 0)
-	   printk(KERN_NOTICE "i2c-slave TX underrun error");
-   if ((reg & BSC_RSR_OE) != 0)
-	   printk(KERN_NOTICE "i2c-slave RX overrun error");*/
->>>>>>> origin/master
-
    stat_reg = readl(i2c_slave->base + BSC_MIS);      //interrupt status reg
                                                      // clear error register
    writel(0, i2c_slave->base + BSC_RSR);
 
    if(stat_reg & BSC_MIS_RXMIS){
-	   reg |= (BSC_CR_EN | BSC_CR_I2C | BSC_RXE);       //enable i2c mode and device
-	   writel(reg, i2c_slave->base + BSC_CR);
 
                                                 //while RX_FIFO not empty
      while( !((reg = readl(i2c_slave->base + BSC_FR)) & BSC_FR_RXFE) ){
@@ -140,12 +124,6 @@ static irqreturn_t i2c_slave_irq(int irq, void *dev_id) {
                                       i2c_slave->rx_buf);
      }
 
-<<<<<<< HEAD
-	 reg |= (BSC_CR_EN | BSC_CR_I2C | BSC_RXE);       //enable i2c mode and device
-	 writel(reg, i2c_slave->base + BSC_CR);
-
-=======
->>>>>>> origin/master
    wake_up_interruptible(&i2c_slave_inq);
 
    }
@@ -163,29 +141,19 @@ static irqreturn_t i2c_slave_irq(int irq, void *dev_id) {
           writel(reg ,i2c_slave->base + BSC_IMSC);
      }
 
-<<<<<<< HEAD
-	 reg |= (BSC_CR_EN | BSC_CR_I2C | BSC_TXE);       //enable i2c mode and device
-	 writel(reg, i2c_slave->base + BSC_CR);
-
-=======
->>>>>>> origin/master
      reg = readl(i2c_slave->base + BSC_FR);
                                                //while space in TX FIFO
-     while(( (!(reg & BSC_FR_TXFF)) && (tx_value_count != 0)) ){
+	 while (((!(reg & BSC_FR_TXFF)) && (tx_value_count != 0))){
 
 
-          writel(*( (u8 *)i2c_slave->tx_buf_tail ), i2c_slave->base + BSC_DR);
-          i2c_slave_incr_buffer_pointer(&i2c_slave->tx_buf_tail,
-                                          1,
-                                          i2c_slave->tx_buf);
-          tx_value_count = i2c_slave->tx_buf_head - i2c_slave->tx_buf_tail;
-          reg = readl(i2c_slave->base + BSC_FR);
+		 writel(*((u8 *)i2c_slave->tx_buf_tail), i2c_slave->base + BSC_DR);
+		 i2c_slave_incr_buffer_pointer(&i2c_slave->tx_buf_tail,
+			 1,
+			 i2c_slave->tx_buf);
+		 tx_value_count = i2c_slave->tx_buf_head - i2c_slave->tx_buf_tail;
+		 reg = readl(i2c_slave->base + BSC_FR);
 
-     }
-
-	 reg |= (BSC_CR_EN | BSC_CR_I2C );       //enable i2c mode and device
-	 writel(reg, i2c_slave->base + BSC_CR);
-
+	 }
 
    wake_up_interruptible(&i2c_slave_outq);
  
@@ -504,11 +472,7 @@ int __init bcm2708_i2c_slave_init(void){
   reg = BSC_CR_BRK;                      //clear FIFOs
   writel(reg, i2c_slave->base + BSC_CR);
 
-<<<<<<< HEAD
-  reg |= (BSC_CR_EN | BSC_CR_I2C);       //enable i2c mode and device
-=======
   reg = (BSC_CR_EN | BSC_CR_I2C | BSC_CR_TXE);       //enable i2c mode and device
->>>>>>> origin/master
   writel(reg, i2c_slave->base + BSC_CR);
 
   return 0;

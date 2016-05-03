@@ -77,8 +77,4 @@
 #define BSC_FR_RXFF				0x00000008
 #define BSC_FR_TXFF				0x00000004
 #define BSC_FR_RXFE             0x00000002
-<<<<<<< HEAD
 #define BSC_FR_TXBUSY           0x00000001
-=======
-#define BSC_FR_TXBUSY           0x00000001
->>>>>>> origin/master
