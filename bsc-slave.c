@@ -331,6 +331,7 @@ static long i2c_slave_ioctl(struct file *filp, unsigned int cmd, unsigned long a
 		case I2C_SLAVE_CLEAR_FIFOS: writel(readl(i2c_slave->base + BSC_CR)|BSC_CR_BRK, i2c_slave->base + BSC_CR);
 			writel(readl(i2c_slave->base + BSC_CR) & ~BSC_CR_BRK, i2c_slave->base + BSC_CR);
 			return 0;
+		case I2C_SLAVE_BSC_DR: return readl(i2c_slave->base + BSC_DR);
 		case I2C_SLAVE_BSC_RSR: return readl(i2c_slave->base + BSC_RSR);
 		case I2C_SLAVE_BSC_SLV: return readl(i2c_slave->base + BSC_SLV);
 		case I2C_SLAVE_BSC_CR: return readl(i2c_slave->base + BSC_CR);
@@ -475,7 +476,8 @@ int __init bcm2708_i2c_slave_init(void){
   reg = BSC_CR_BRK;                      //clear FIFOs
   writel(reg, i2c_slave->base + BSC_CR);
 
-  reg = (BSC_CR_EN | BSC_CR_I2C | BSC_CR_TXE);       //enable i2c mode and device
+
+  reg = (BSC_CR_EN | BSC_CR_I2C | BSC_CR_TXE | BSC_CR_RXE);       //enable i2c mode and device
   writel(reg, i2c_slave->base + BSC_CR);
 
   return 0;

@@ -10,6 +10,7 @@
 #define I2C_SLAVE_BSC_MIS		0x070e
 #define I2C_SLAVE_BSC_ICR		0x070f
 #define I2C_SLAVE_CLEAR_FIFOS	0x0710
+#define I2C_SLAVE_BSC_DR		0x0711
 
 /* BSC SLAVE register offsets */
 #define BSC_DR			0x00
