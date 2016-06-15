@@ -23,10 +23,13 @@
 #define DEVICE_NAME             "i2c-slave"
 #define DRV_NAME                "i2c-slave-controller"
 #define BUFFER_SIZE             PAGE_SIZE
-#define IRQ_NUMBER		43
-#define MAX_DEVICES		10
+#define IRQ_NUMBER				43
+#define MAX_DEVICES				10
 
-#define BSC_SLAVE_BASE           (BCM2708_PERI_BASE + 0x214000)
+
+#define BCM2708_PERI_BASE		0x3F000000
+#define GPIO_BASE				(BCM2708_PERI_BASE + 0x200000)
+#define BSC_SLAVE_BASE          (GPIO_BASE + 0x14000)
 
 struct bcm2708_i2c_slave_struct {
        void  __iomem          *base;
