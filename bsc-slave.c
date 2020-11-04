@@ -11,6 +11,7 @@
 #include <linux/wait.h>
 #include <asm/uaccess.h>
 #include <linux/sched.h>
+#include <linux/sched/signal.h>
 
 #include "bsc-slave.h"
 
