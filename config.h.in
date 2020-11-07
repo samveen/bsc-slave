@@ -1,0 +1,2 @@
+#define BCM2708_PERI_BASE       __BCM2708_PERI_BASE__
+

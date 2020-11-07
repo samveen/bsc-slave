@@ -27,9 +27,11 @@
 #define IRQ_NUMBER              43
 #define MAX_DEVICES             10
 
-
-#define BCM2708_PERI_BASE        0x3F000000
-#define GPIO_BASE                (BCM2708_PERI_BASE + 0x200000)
+/* BCM2708_PERI_BASE defined in config.h,
+ * as it is different for every model
+ */
+#include "config.h"
+#define GPIO_BASE               (BCM2708_PERI_BASE + 0x200000)
 #define BSC_SLAVE_BASE          (GPIO_BASE + 0x14000)
 
 struct bcm2708_i2c_slave_struct {
