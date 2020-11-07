@@ -53,6 +53,16 @@ static int major;
 static struct class *i2c_slave_class;
 static struct device *i2c_slave_device;
 
+// Debug flag
+static int debug;
+
+// DBG macro
+#define DBG( format, arg... ) \
+    if (debug == 1)\
+    { \
+        printk( KERN_INFO "bsc_slave::%s " format, __FUNCTION__, ## arg ); \
+    } \
+
 /***************************************************************************/
 /*         Helper function to increment pointer on circular buffer         */
 /***************************************************************************/
@@ -320,6 +330,7 @@ static long i2c_slave_ioctl(struct file *filp, unsigned int cmd, unsigned long a
     struct bcm2708_i2c_slave_struct *i2c_slave = filp->private_data;
     u32 reg;
 
+    DBG( "IOCTL called: CMD = 0x%x\n", cmd );
     switch (cmd) {
         case I2C_SLAVE:
         case I2C_SLAVE_FORCE:
@@ -546,5 +557,8 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_ALIAS("chdrv:" DRV_NAME);
+
+module_param( debug, int, S_IRUGO | S_IWUSR );
+MODULE_PARM_DESC( debug, "Debug enabled or not" );
 
 // vim: ts=4 sw=4 cin et:
